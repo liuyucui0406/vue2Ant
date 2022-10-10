@@ -1,13 +1,29 @@
 <template>
-  <a-table :columns="columns" :data-source="data" bordered :pagination="false">
+  <a-table
+    :columns="columns"
+    :data-source="data"
+    bordered
+    :pagination="false"
+    :scroll="{ x: 200, y: 600 }"
+  >
     <template slot="operation" slot-scope="text, record">
-      <a-icon
-        type="arrow-up"
-        @click="() => upFun(record)"
-        style="margin: 10px"
-      />
-      <a-icon type="arrow-down" @click="() => downFun(record)" />
-      <a-icon type="plus" @click="() => addFun(record)" />
+      <span style="display: inline-block; width: 35px">
+        <a-icon type="plus" @click="() => addFun(record)" />
+      </span>
+      <span style="display: inline-block; width: 35px">
+        <a-icon
+          type="arrow-up"
+          v-show="record.showUp"
+          @click="() => moveFun(record, 'up')"
+        />
+      </span>
+      <span style="display: inline-block; width: 35px">
+        <a-icon
+          type="arrow-down"
+          v-show="record.showDown"
+          @click="() => moveFun(record, 'down')"
+        />
+      </span>
     </template>
   </a-table>
 </template>
@@ -142,7 +158,23 @@ const formatData = (_data) => {
     });
     inx += itemData.length;
   });
-  return data;
+  return formatUpAndDown(data);
+};
+const formatUpAndDown = (_data) => {
+  //是否显示上下箭头
+  _data.forEach((item, index) => {
+    if (index == 0 || _data[index - 1].age != item.age) {
+      item.showUp = false;
+    } else {
+      item.showUp = true;
+    }
+    if (index == _data.length - 1 || _data[index + 1].age != item.age) {
+      item.showDown = false;
+    } else {
+      item.showDown = true;
+    }
+  });
+  return _data;
 };
 export default {
   data() {
@@ -150,6 +182,7 @@ export default {
       {
         title: "Name",
         dataIndex: "name",
+        width: 200,
         customRender: (value, row, index) => {
           const { nameStart, nameEnd, nameNum } = row;
           const obj = {
@@ -163,6 +196,7 @@ export default {
       },
       {
         title: "Age",
+        width: 200,
         dataIndex: "age",
         customRender: (value, row, index) => {
           const { ageStart, ageEnd, ageNum } = row;
@@ -175,20 +209,36 @@ export default {
         },
       },
       {
+        width: 200,
         title: "Home phone",
         dataIndex: "tel",
       },
       {
+        width: 200,
         title: "Phone",
         dataIndex: "phone",
       },
       {
         title: "Address",
         dataIndex: "address",
+        width: 200,
       },
+      {
+        title: "Home phone",
+        dataIndex: "tel1",
+        width: 200,
+      },
+      {
+        title: "Phone",
+        dataIndex: "phone1",
+        width: 200,
+      },
+
       {
         title: "operation",
         dataIndex: "operation",
+        fixed: "right",
+        // width: 200,
         scopedSlots: { customRender: "operation" },
       },
     ];
@@ -198,28 +248,19 @@ export default {
     };
   },
   created() {
+    console.log(this.$store.state.count);
     this.data = formatData(this.data);
     console.log(this.data);
   },
   methods: {
-    upFun(d) {
+    moveFun(d, str) {
       let index = this.data.findIndex((e) => e.key == d.key);
-      if (index == 0 || this.data[index - 1].age != d.age) {
-        this.$message.warning("不可以往上移动");
-      } else {
+      if (str == "up") {
         this.data[index] = this.data.splice(index - 1, 1, this.data[index])[0];
-      }
-    },
-    downFun(d) {
-      let index = this.data.findIndex((e) => e.key == d.key);
-      if (
-        index == this.data.length - 1 ||
-        this.data[index + 1].age != this.data[index].age
-      ) {
-        this.$message.warning("不可以往下移动");
       } else {
         this.data[index] = this.data.splice(index + 1, 1, this.data[index])[0];
       }
+      this.data = formatUpAndDown(this.data);
     },
     addFun(d) {
       let index = this.data.findIndex((e) => e.key == d.key);
